@@ -52,6 +52,8 @@ Puntuacion:
 - `]`
 - `{`
 - `}`  
+- `,`
+- `.`
 
 
 Literales:
@@ -59,7 +61,6 @@ Literales:
 - `"Hola"` Cadenas de texto 
 - `true` Booleanos 
 - `null` Null 
-- `undefined` Undefined 
 - `{}` Objetos literales 
 - `[]` Arreglos literales 
 
@@ -79,7 +80,16 @@ Formal language :
 
 `STATEMENT_LIST` ⟶ (STATEMENT)*
 
-`STATEMENT` ⟶ (VAR_DECLARATION ";") | (ASSIGNMENT ";") | IF_STATEMENT | WHILE_LOOP | CLASS_DECLARATION | FUNCTION_DECLARATION | FOR_LOOP | (FUNCTION_CALL ";")
+`STATEMENT` ⟶ (VAR_DECLARATION ";") | (ASSIGNMENT ";") | IF_STATEMENT | WHILE_LOOP | CLASS_DECLARATION | FUNCTION_DECLARATION | FOR_LOOP | (FUNCTION_CALL ";") | RETURN_STATMENT
+
+
+`CONTROL_FLOW_STATEMENT` ⟶ ("break" | "continue") ";"
+
+`RETURN_STATMENT` ⟶ "return" (EXPRESSION)? ";"
+
+
+`RETURN_STATMENT` ⟶ "return" (EXPRESSION)? ";"
+
 
 `FUNCTION_CALL` ⟶ IDENTIFIER "(" ((IDENTIFIER | LITERAL) ("," (IDENTIFIER | LITERAL)  )*)? ")"  
 
@@ -88,7 +98,7 @@ Formal language :
 `FUNCTION_DECLARATION` ⟶ "function " IDENTIFIER "(" FUNCTION_ARGS* ")" "{" STATEMENT_LIST "}"
 
 
-`FOR_LOOP` ⟶ "for " "("VAR_DECLARATION ";" CONDITION ";" EXPRESSION ")"
+`FOR_LOOP` ⟶ "for " "("VAR_DECLARATION ";" CONDITION ";" EXPRESSION ")"  "{" STATEMENT_LIST (CONTROL_FLOW_STATEMENT)?  STATEMENT_LIST "}"
 
 `CLASS_DECLARATION` ⟶ "class " IDENTIFIER OBJECT
 
@@ -96,17 +106,20 @@ Formal language :
 
 `IF_STATEMENT` ⟶ "if" "("  CONDITION ")" "{" STATEMENT_LIST "}" ("else"(IF_STATEMENT | ("{" STATEMENT_LIST "}" )  ) )?
 
-`WHILE_LOOP` ⟶ "while" "(" CONDITION ")" "{" STATEMENT_LIST "}"
+`WHILE_LOOP` ⟶ "while" "(" CONDITION ")" "{" STATEMENT_LIST (CONTROL_FLOW_STATEMENT)?  STATEMENT_LIST "}"
 
 `CONDITION` ⟶ EXPRESSION CONDITIONAL_SYMBOL EXPRESSION
 
 `CONDITIONAL_SYMBOL` ⟶ "==" | "!=" | "<" | ">" | "<=" | ">="
 
-`EXPRESSION` ⟶ TERM | FUNCTION_CALL | ARRAY_ACCESS |( ("+" | "-") TERM )*
+`EXPRESSION` ⟶ TERM | FUNCTION_CALL | ARRAY_ACCESS |( EXPRESSION_OPERATORS TERM )*
+
+`EXPRESSION_OPERATOR` ⟶ "+" | "-" 
+
 
 `TERM` ⟶ FACTOR | (TERM_OPERATORS FACTOR)
 
-`TERM_OPERATORS` ⟶ "*" | "==" | "!=" | "<" | ">" | "<=" | ">=" | "&&" | "||"
+`TERM_OPERATOR` ⟶ "*" | "==" | "!=" | "<" | ">" | "<=" | ">=" | "&&" | "||"
 
 `FACTOR` ⟶ IDENTIFIER | NUMBER | "(" EXPRESSION ")"
 
