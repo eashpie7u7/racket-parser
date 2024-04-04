@@ -22,7 +22,7 @@
            expression-operator-tokens
            term-operator-tokens
            punctuation-tokens]
-          [grammar [expr [(NUMBER COMMA NUMBER) (+ $1 $3)]]]))
+          [grammar [expr [(NUMBER PLUS NUMBER) (+ $1 $3)]]]))
 
 (define src-code (open-input-file "src/test.js"))
 (port-count-lines! src-code) ;enable lines and cols nums

@@ -32,7 +32,9 @@
 
   (lexer-src-pos
    ;COMMENTS
-   [(:seq "//" (:* (:~ #\newline)) #\newline) (lex input-port)]
+   [(:seq "//" (:* (:~ #\newline)) #\newline) (return-without-pos (lex input-port))]
+   ;WHITESPACE
+   [whitespace (return-without-pos (lex input-port))]
    ;KEYWORDS
    ["if" (token-IF)]
    ["else" (token-ELSE)]
@@ -82,20 +84,11 @@
    ["false" (token-BOOLEAN lexeme)]
    ;IDENTIFIERS
    [(:seq (:or alphabetic #\_) (:* (union alphabetic numeric #\_))) (token-IDENTIFIER lexeme)]
-   ;whitespace
-   [whitespace (token-COMMA)]
    ;EOF
    [(eof) (token-EOF)]))
 
 (define src-code (open-input-file "src/test.js"))
 (port-count-lines! src-code) ;enable lines and cols nums
-
-(lex src-code)
-(lex src-code)
-(lex src-code)
-(lex src-code)
-(lex src-code)
-(lex src-code)
 
 ;exports
 (provide literal-tokens)
