@@ -1,0 +1,2 @@
+lexer:fix recursion error when calling
+  (lex input-port) in comments and whitespace
