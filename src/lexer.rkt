@@ -1,17 +1,14 @@
 #lang racket
-
 (require parser-tools/lex)
-;(require parser-tools/lex-sre)
 (require (prefix-in : parser-tools/lex-sre))
 
-(define-tokens literal-tokens (NUMBER STRING NULL BOOLEAN))
+(define-tokens literal-tokens (NUMBER STRING))
 (define-tokens identifier-tokens (IDENTIFIER))
 
-(define-empty-tokens keyword-tokens
-                     (IF ELSE FOR WHILE BREAK CONTINUE RETURN FUNCTION VAR LET CONST CLASS))
+(define-empty-tokens keyword-tokens (IF ELSE FOR WHILE DO SWITCH CASE DEFAULT BREAK CONTINUE RETURN))
+(define-empty-tokens type-tokens (INT CHAR FLOAT DOUBLE VOID))
 
-(define-empty-tokens expression-operator-tokens (PLUS MINUS))
-
+(define-empty-tokens expression-operator-tokens (PLUS MINUS INCREMENT DECREMENT))
 (define-empty-tokens term-operator-tokens
                      (MULTIPLY DIVIDE
                                ASSIGNMENT
@@ -29,10 +26,9 @@
  (SEMICOLON COMMA DOT LEFT_BRACE RIGHT_BRACE LEFT_BRACKET RIGHT_BRACKET LEFT_PAREN RIGHT_PAREN EOF))
 
 (define lex
-
   (lexer-src-pos
    ;COMMENTS
-   [(:seq "//" (:* (:~ #\newline)) #\newline) (return-without-pos (lex input-port))]
+   [(:seq "/*" (:* (:~ #\*)) "*/") (return-without-pos (lex input-port))]
    ;WHITESPACE
    [whitespace (return-without-pos (lex input-port))]
    ;KEYWORDS
@@ -40,17 +36,24 @@
    ["else" (token-ELSE)]
    ["for" (token-FOR)]
    ["while" (token-WHILE)]
+   ["do" (token-DO)]
+   ["switch" (token-SWITCH)]
+   ["case" (token-CASE)]
+   ["default" (token-DEFAULT)]
    ["break" (token-BREAK)]
    ["continue" (token-CONTINUE)]
    ["return" (token-RETURN)]
-   ["function" (token-FUNCTION)]
-   ["var" (token-VAR)]
-   ["let" (token-LET)]
-   ["const" (token-CONST)]
-   ["class" (token-CLASS)]
+   ;TYPES
+   ["int" (token-INT)]
+   ["char" (token-CHAR)]
+   ["float" (token-FLOAT)]
+   ["double" (token-DOUBLE)]
+   ["void" (token-VOID)]
    ;OPERATORS
    ["+" (token-PLUS)]
    ["-" (token-MINUS)]
+   ["++" (token-INCREMENT)]
+   ["--" (token-DECREMENT)]
    ["*" (token-MULTIPLY)]
    ["/" (token-DIVIDE)]
    ["=" (token-ASSIGNMENT)]
@@ -76,26 +79,30 @@
    [(:seq #\" (:* (:~ #\")) #\") (token-STRING lexeme)]
    ;NUMBER LITERAL
    [(:seq (:+ numeric) (:? (:seq #\. (:* numeric)))) (token-NUMBER (string->number lexeme))]
-   ;NULL LITERAL
-   ["null" (token-NULL lexeme)]
-   ;TRUE LITERAL
-   ["true" (token-BOOLEAN lexeme)]
-   ;FALSE LITERAL
-   ["false" (token-BOOLEAN lexeme)]
    ;IDENTIFIERS
    [(:seq (:or alphabetic #\_) (:* (union alphabetic numeric #\_))) (token-IDENTIFIER lexeme)]
    ;EOF
    [(eof) (token-EOF)]))
 
-(define src-code (open-input-file "src/test.js"))
-(port-count-lines! src-code) ;enable lines and cols nums
+(define src-code (open-input-file "src/test.c"))
+; (port-count-lines! src-code) ;enable lines and cols nums
 
 ;exports
 (provide literal-tokens)
 (provide identifier-tokens)
 (provide keyword-tokens)
+(provide type-tokens)
 (provide expression-operator-tokens)
 (provide term-operator-tokens)
 (provide punctuation-tokens)
-
 (provide lex)
+
+;print tokens
+
+(define sample-input "void main(){}")
+
+(define (get-tokens a-lexer)
+  (define p (open-input-string sample-input))
+  (list (a-lexer p) (a-lexer p) (a-lexer p) (a-lexer p) (a-lexer p)))
+
+(get-tokens lex)
