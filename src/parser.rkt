@@ -94,6 +94,7 @@
                  [(expr MULTIPLY expr) (list '* $1 $3)]
                  [(expr DIVIDE expr) (list '/ $1 $3)]
                  [(expr EQUAL expr) (list '== $1 $3)]
+                 [(expr GREATER_THAN expr) (list '> $1 $3)]
                  [(expr LESS_THAN expr) (list '< $1 $3)]
                  [(expr INCREMENT) (increment $1)]
                  [(expr DECREMENT) (decrement $1)]
