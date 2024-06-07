@@ -14,6 +14,7 @@
 
 (define error-handler
   (lambda (tok-ok? tok-name tok-value start-pos end-pos)
+    (printf "Sintaxis incorrecta" )
     (printf "\n\n\nError: Invalid token detected: ~a, Value: ~a\n\n\n\n" tok-name tok-value)
     ;(printf "Start position: ~a, End position: ~a\n" start-pos end-pos)
     ))
@@ -45,7 +46,9 @@
            
            [statement [(declaration SEMICOLON) $1]
                       [(expr SEMICOLON) $1]
-                      [(if-statement) $1]]
+                      [(if-statement) $1]
+                      [(for-statement) $1]
+                      [(function-call SEMICOLON) $1]]
            
            [if-statement [(IF LEFT_PAREN expr RIGHT_PAREN block) 
                          (list 'if $3 $5)]
@@ -55,6 +58,26 @@
                          (list 'if $3 $5)]
                         [(IF LEFT_PAREN expr RIGHT_PAREN statement ELSE statement) 
                          (list 'if-else $3 $5 $7)]]
+           
+           [for-statement [(FOR LEFT_PAREN for-init SEMICOLON for-cond SEMICOLON for-incr RIGHT_PAREN block)
+                         (list 'for $3 $5 $7 $9)]
+                        [(FOR LEFT_PAREN for-init SEMICOLON for-cond SEMICOLON for-incr RIGHT_PAREN statement)
+                         (list 'for $3 $5 $7 $9)]]
+           
+           [for-init [(declaration) $1]
+                     [(expr) $1]
+                     [() #f]]
+           
+           [for-cond [(expr) $1]
+                     [() #t]]
+           
+           [for-incr [(expr) $1]
+                     [() #f]]
+           
+           [function-call [(IDENTIFIER LEFT_PAREN args RIGHT_PAREN) (list 'call $1 $3)]]
+           
+           [args [(expr) (list $1)]
+                 [() '()]]
            
            [declaration [(type-token IDENTIFIER) (list 'declare $1 $2)]
                        [(type-token IDENTIFIER ASSIGNMENT expr) (list 'declare-init $1 $2 $4)]]
@@ -76,9 +99,9 @@
                  [(expr DECREMENT) (decrement $1)]
                  [(IDENTIFIER) $1]
                  [(NUMBER) $1]
-                 [(LEFT_PAREN expr RIGHT_PAREN) $2]]
+                 [(LEFT_PAREN expr RIGHT_PAREN) $2]
+                 [(STRING) $1]]
            ]))
-
 
 
 
