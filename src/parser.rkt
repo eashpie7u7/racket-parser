@@ -3,6 +3,7 @@
 (require "lexer.rkt")
 
 (require parser-tools/yacc)
+(define (increment x) (+ x 1))
 
 (define error-handler
   (lambda (tok-ok? tok-name tok-value start-pos end-pos)
@@ -10,8 +11,10 @@
     ;(printf "Start position: ~a, End position: ~a\n" start-pos end-pos)
     ))
 
+
+
 (define the-parser
-  (parser [start expr]
+  (parser [start program]
           [end EOF]
           [src-pos]
           [error error-handler]
@@ -22,9 +25,17 @@
            expression-operator-tokens
            term-operator-tokens
            punctuation-tokens]
-          [grammar [expr [(NUMBER PLUS NUMBER) (+ $1 $3)]]]))
+          [grammar [program [(expr SEMICOLON program) (cons $1 $3)]
+                           [(expr SEMICOLON) (list $1)]
+                           [() '()]]
+                   [expr [(NUMBER PLUS NUMBER) (+ $1 $3)]
+                         [(NUMBER MINUS NUMBER) (- $1 $3)]
+                         [(NUMBER MULTIPLY NUMBER) (* $1 $3)]
+                         [(NUMBER DIVIDE NUMBER) (/ $1 $3)]
+                         [(NUMBER INCREMENT) (increment $1)]
+                         [(IDENTIFIER) $1]]]))
 
-(define src-code (open-input-file "src/test.js"))
+(define src-code (open-input-file "test.c")) ; (open-input-file "src/test.js")) depende de tu directorio
 (port-count-lines! src-code) ;enable lines and cols nums
 
 (define result (the-parser (λ () (lex src-code))))
