@@ -22,13 +22,22 @@
            literal-tokens
            identifier-tokens
            keyword-tokens
+           type-tokens  ; Añadido para incluir tokens de tipo como INT, CHAR, etc.
            expression-operator-tokens
            term-operator-tokens
            punctuation-tokens]
-          [grammar [program [(expr SEMICOLON program) (cons $1 $3)]
+          [grammar [program [(declaration SEMICOLON program) (cons $1 $3)]
+                           [(expr SEMICOLON program) (cons $1 $3)]
+                           [(declaration SEMICOLON) (list $1)]
                            [(expr SEMICOLON) (list $1)]
                            [(LEFT_PAREN expr RIGHT_PAREN) $2] 
                            [() '()]]
+                   [declaration [(type-token IDENTIFIER) (list 'declare $1 $2)]]
+                   [type-token [(INT) 'int]
+                              [(CHAR) 'char]
+                              [(FLOAT) 'float]
+                              [(DOUBLE) 'double]
+                              [(VOID) 'void]]
                    [expr [(NUMBER PLUS NUMBER) (+ $1 $3)]
                          [(NUMBER MINUS NUMBER) (- $1 $3)]
                          [(NUMBER MULTIPLY NUMBER) (* $1 $3)]
@@ -37,6 +46,8 @@
                          [(NUMBER DECREMENT) (decrement $1)]
                          [(IDENTIFIER) $1]]]
           ))
+
+
 
 
 (define src-code (open-input-file "test.c"))
