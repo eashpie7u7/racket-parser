@@ -1,23 +1,3 @@
-#lang racket
-
-(require "lexer.rkt")
-
-(require parser-tools/yacc)
-(define (increment x) 
-  (cond [(number? x) (+ x 1)]
-        [(symbol? x) (list 'post-increment x)]))
-
-(define (decrement x)
-  (cond [(number? x) (- x 1)]
-        [(symbol? x) (list 'post-decrement x)]))
-
-(define error-handler
-  (lambda (tok-ok? tok-name tok-value start-pos end-pos)
-    (printf "Sintaxis incorrecta")
-    (printf "\n\n\nError: Invalid token detected: ~a, Value: ~a\n\n\n\n" tok-name tok-value)
-    ;(printf "Start position: ~a, End position: ~a\n" start-pos end-pos)
-    ))
-
 (define the-parser
   (parser [start c-program]
           [end EOF]
@@ -48,7 +28,11 @@
                       [(expr SEMICOLON) $1]
                       [(if-statement) $1]
                       [(for-statement) $1]
+                      [(while-statement) $1]
+                      [(do-while-statement) $1]
                       [(switch-statement) $1]
+                      [(return-statement) $1]
+                      [(continue-statement) $1]
                       [(function-call SEMICOLON) $1]]
            
            [if-statement [(IF LEFT_PAREN expr RIGHT_PAREN block) 
@@ -64,6 +48,16 @@
                          (list 'for $3 $5 $7 $9)]
                         [(FOR LEFT_PAREN for-init SEMICOLON for-cond SEMICOLON for-incr RIGHT_PAREN statement)
                          (list 'for $3 $5 $7 $9)]]
+           
+           [while-statement [(WHILE LEFT_PAREN expr RIGHT_PAREN block)
+                             (list 'while $3 $5)]
+                            [(WHILE LEFT_PAREN expr RIGHT_PAREN statement)
+                             (list 'while $3 $5)]]
+
+           [do-while-statement [(DO block WHILE LEFT_PAREN expr RIGHT_PAREN SEMICOLON)
+                                (list 'do-while $2 $5)]
+                               [(DO statement WHILE LEFT_PAREN expr RIGHT_PAREN SEMICOLON)
+                                (list 'do-while $2 $5)]]
 
            [switch-statement [(SWITCH LEFT_PAREN expr RIGHT_PAREN switch-block) 
                               (list 'switch $3 $5)]]
@@ -84,6 +78,13 @@
 
            [break-statement [(BREAK SEMICOLON) 'break]]
            
+           [return-statement [(RETURN expr SEMICOLON) 
+                             (list 'return $2)]
+                            [(RETURN SEMICOLON)
+                             'return]]
+           
+           [continue-statement [(CONTINUE SEMICOLON) 'continue]]
+
            [for-init [(declaration) $1]
                      [(expr) $1]
                      [() #f]]
@@ -114,70 +115,24 @@
                  [(expr MULTIPLY expr) (list '* $1 $3)]
                  [(expr DIVIDE expr) (list '/ $1 $3)]
                  [(expr EQUAL expr) (list '== $1 $3)]
-                 [(expr GREATER_THAN expr) (list '> $1 $3)]
+                 [(expr NOT_EQUAL expr) (list '!= $1 $3)]
                  [(expr LESS_THAN expr) (list '< $1 $3)]
+                 [(expr GREATER_THAN expr) (list '> $1 $3)]
+                 [(expr LESS_THAN_OR_EQUAL expr) (list '<= $1 $3)]
+                 [(expr GREATER_THAN_OR_EQUAL expr) (list '>= $1 $3)]
+                 [(expr AND expr) (list '&& $1 $3)]
+                 [(expr OR expr) (list '|| $1 $3)]
                  [(expr INCREMENT) (increment $1)]
                  [(expr DECREMENT) (decrement $1)]
                  [(IDENTIFIER) $1]
                  [(NUMBER) $1]
                  [(LEFT_PAREN expr RIGHT_PAREN) $2]
                  [(STRING) $1]]
+
+           [term [(IDENTIFIER) $1]
+                 [(NUMBER) $1]
+                 [(STRING) $1]
+                 [(LEFT_PAREN expr RIGHT_PAREN) $2]
+                 [(expr INCREMENT) (increment $1)]
+                 [(expr DECREMENT) (decrement $1)]]
            ]))
-
-;; Function to generate highlighted HTML
-(define (surround1 s1 c)
-  (string-append "<" c ">" s1))
-
-(define (surround2 s1 c)
-  (string-append "<" c ">" s1 "</" c ">"))
-
-(define (surround3 s1 c)
-  (string-append s1 "</" c ">"))
-
-(define (sep str)
-  (regexp-split #rx"(?<=\\]|\\[|(\r\n)|[+-/()<>{}=;: ])|(?=\\]|\\[|(\r\n)|[+-/()<>{}=;: ])" str))
-
-(define (surroundRegexp s1)
-  (cond
-    [(regexp-match #rx"[0-9]+" s1) (set! s1 (surround2 s1 "num"))]
-    [(regexp-match #rx"\\." s1) (set! s1 (surround2 s1 "num"))]
-    [(regexp-match #rx"[><*=/+-]" s1) (set! s1 (surround2 s1 "op"))]
-    [(regexp-match #rx"^else$|^if$" s1) (set! s1 (surround2 s1 "cond"))]
-    [(regexp-match #rx"^for$|^while$" s1) (set! s1 (surround2 s1 "loop"))]
-    [(regexp-match #rx"\".*\"" s1) (set! s1 (surround2 s1 "string"))]
-    [(regexp-match #rx"(?<=\")(?=.)" s1) (set! s1 (surround1 s1 "string"))]
-    [(regexp-match #rx"(?<=.)(?=\")" s1) (set! s1 (surround3 s1 "string"))]
-    [(regexp-match #rx"(?<=')(?=.)" s1) (set! s1 (surround1 s1 "string"))]
-    [(regexp-match #rx"(?<=.)(?=')" s1) (set! s1 (surround3 s1 "string"))]
-    [(regexp-match #rx"'.*'" s1) (set! s1 (surround2 s1 "string"))]
-    [(regexp-match #rx"\\]|\\[|[(]|[)]|[{]|[}]" s1) (set! s1 (surround2 s1 "par"))]
-    [(regexp-match #rx"[,]" s1) (set! s1 (surround2 s1 "punct"))]
-    [(regexp-match #rx" " s1) (set! s1 "&nbsp ")]
-    [(regexp-match #rx"(\r\n)" s1) (set! s1 "<br>")]
-    )s1)
-
-(define (resaltar2 x)
-  (set! x (sep x))
-  (set! x (map (lambda (lst) (surroundRegexp lst)) x))
-  (set! x (string-join x ""))
-  (set! x (string-append " <html> <head> <link rel=\"stylesheet\" href=\"estilo.css\"> </head> <body> " x "</body> </html> "))
-  x)
-
-(define (res ruta string)
-  (call-with-output-file ruta
-    (lambda (port)
-      (display string port))
-    #:exists 'replace))
-
-(define (resultado x)
-  (res "resaltado.html" (resaltar2 x)))
-
-;; Main function to parse the source code and generate highlighted HTML
-(define (main)
-  (define src-code (open-input-file "test.c"))
-  (port-count-lines! src-code)
-  (define result (the-parser (λ () (lex src-code))))
-  (resultado (file->string "test.c"))
-  (display result))
-
-(main)
